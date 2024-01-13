@@ -4,25 +4,41 @@ from app import app
 from models import db, Message
 
 class TestApp:
-    '''Flask application in app.py'''
+    @classmethod
+    def setup_class(cls):
+        with app.app_context():
+            # Remove existing messages with body "Hello 👋" and username "Liza"
+            messages_to_delete = Message.query.filter(
+                Message.body == "Hello 👋",
+                Message.username == "Liza"
+            ).all()
 
-    with app.app_context():
-        m = Message.query.filter(
-            Message.body == "Hello 👋"
-            ).filter(Message.username == "Liza")
+            for message in messages_to_delete:
+                db.session.delete(message)
 
-        for message in m:
-            db.session.delete(message)
+            db.session.commit()
 
-        db.session.commit()
+    @classmethod
+    def teardown_class(cls):
+        # Cleanup: Remove any remaining messages with body "Hello 👋" and username "Liza"
+        with app.app_context():
+            messages_to_delete = Message.query.filter(
+                Message.body == "Hello 👋",
+                Message.username == "Liza"
+            ).all()
+
+            for message in messages_to_delete:
+                db.session.delete(message)
+
+            db.session.commit()
 
     def test_has_correct_columns(self):
         with app.app_context():
-
             hello_from_liza = Message(
                 body="Hello 👋",
-                username="Liza")
-            
+                username="Liza"
+            )
+
             db.session.add(hello_from_liza)
             db.session.commit()
 
@@ -34,7 +50,6 @@ class TestApp:
             db.session.commit()
 
     def test_returns_list_of_json_objects_for_all_messages_in_database(self):
-        '''returns a list of JSON objects for all messages in the database.'''
         with app.app_context():
             response = app.test_client().get('/messages')
             records = Message.query.all()
@@ -44,14 +59,12 @@ class TestApp:
                 assert(message['body'] in [record.body for record in records])
 
     def test_creates_new_message_in_the_database(self):
-        '''creates a new message in the database.'''
         with app.app_context():
-
             app.test_client().post(
                 '/messages',
                 json={
-                    "body":"Hello 👋",
-                    "username":"Liza",
+                    "body": "Hello 👋",
+                    "username": "Liza",
                 }
             )
 
@@ -62,14 +75,12 @@ class TestApp:
             db.session.commit()
 
     def test_returns_data_for_newly_created_message_as_json(self):
-        '''returns data for the newly created message as JSON.'''
         with app.app_context():
-
             response = app.test_client().post(
                 '/messages',
                 json={
-                    "body":"Hello 👋",
-                    "username":"Liza",
+                    "body": "Hello 👋",
+                    "username": "Liza",
                 }
             )
 
@@ -84,11 +95,8 @@ class TestApp:
             db.session.delete(h)
             db.session.commit()
 
-
     def test_updates_body_of_message_in_database(self):
-        '''updates the body of a message in the database.'''
         with app.app_context():
-
             m = Message.query.first()
             id = m.id
             body = m.body
@@ -96,7 +104,7 @@ class TestApp:
             app.test_client().patch(
                 f'/messages/{id}',
                 json={
-                    "body":"Goodbye 👋",
+                    "body": "Goodbye 👋",
                 }
             )
 
@@ -108,9 +116,7 @@ class TestApp:
             db.session.commit()
 
     def test_returns_data_for_updated_message_as_json(self):
-        '''returns data for the updated message as JSON.'''
         with app.app_context():
-
             m = Message.query.first()
             id = m.id
             body = m.body
@@ -118,7 +124,7 @@ class TestApp:
             response = app.test_client().patch(
                 f'/messages/{id}',
                 json={
-                    "body":"Goodbye 👋",
+                    "body": "Goodbye 👋",
                 }
             )
 
@@ -131,13 +137,12 @@ class TestApp:
             db.session.commit()
 
     def test_deletes_message_from_database(self):
-        '''deletes the message from the database.'''
         with app.app_context():
-
             hello_from_liza = Message(
                 body="Hello 👋",
-                username="Liza")
-            
+                username="Liza"
+            )
+
             db.session.add(hello_from_liza)
             db.session.commit()
 
